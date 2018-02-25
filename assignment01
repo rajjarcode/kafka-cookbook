@@ -1,0 +1,82 @@
+************************************************************************************
+************************************************************************************
+Assignment 1
+Setup a Kafka + zookeeper environment on Linux (Ubuntu 16.04 - 64bit) and send/receive messages manually via terminal.
+Should be able to publish and subscribe two topics via Kafka
+Topics are, topic 1 name = buy_aud and topic 2 name = sell_aud
+Manually enter data on a terminal (via producer1) and receive on two different terminals (via consumer1 and consumer2).
+ 
+Topics 1 & 2  -> Producer ---> Kafka --->  Consumer 1  -> Terminal 1 (Topic 1)
+                       |-> Consumer 2 -> Terminal 2 (Topic 2)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Solution
+Install Linux on AWS + Kafka Udemy Docker image
+Start Zookeeper
+Start Kafka
+Manually create 2 topics using "producer" commands
+Manually create 2 "consumers" to read 2 topics and display in 2 terminals
+Live Demo:  Inject topics via terminal to producer and then use two terminals via two consumers to display two topics separately
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 1: Linux - Ubuntu 16.04 (64 bit) setup on AWS (Always use spot request)
+Log into ASW account
+Click on -> EC2 -> Spot Request -> Spot Advisor (only for prototype)
+Select Ubuntu Server 16.04 LTS (HVM) 64bit (ami-33ab5251)
+Select instance t2.medium(4GB RAM)
+Create new security group or use existing one with the following settings: 
+Enable SSH only for my IP and click next and then launch
+Enable Ports: 3030, 2181, 9092, 8081, 8082, 8083 (access from anywhere)
+Auto assign IPv4 Public Address -> Use subnet setting to make it reachable from internet
+Key pair -> create new or use existing key pair & store it safely (name example: kafka-zookeeper-docker.pem)
+Click launch and wait for instance to become active.
+Once the instance is active, go to EX2 -> Elastic IP -> Create one IP and link it to running instance or use previous Elastic IP to link it to the new instance. Remember your Elastic IP (ex: 13.210.214.215)
+To log into ASW from your local computer via SSH do the following (on Mac or Linux): 
+open terminal and change the directory to the location of the private key
+Use command "chmod" to make sure that private key isn't publicly viewable -> chmod 400 kafka-zookeeper-docker.pem
+To SSH, type -> ssh -i "kafka-zookeeper-docker.pem" ubuntu@ec2-13-210-214-215.ap-southeast-2.compute.amazonaws.com [Click on "connect" button on top in ASW to get the user/IP details]
+Update Ubuntu, type -> sudo apt-get update
+Install some basic utilities, type -> sudo apt-get -y install wget vim tar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 2: Install Docker
+Update Ubuntu, type -> sudo apt-get update && sudo apt-get -y install wget vim tar
+For Docker and Docker Compose (just google for steps) and follow the steps:
+type -> sudo apt-get -y install apt-transport-https ca-certificates curl software-properties-common
+type -> curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+type -> check if the finger print is correctly installed from the above step (check docker website for the command and fingerprint code)
+type -> sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+type -> sudo apt-get update
+type -> sudo apt-get install docker-ce [install docker]
+type -> sudo docker run hello-world [to check if docker is installed properly, if it is working it will display "Hello from Docker"]
+type -> sudo curl -L https://github.com/docker/compose/releases/download/1.19.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose [install docker comopose]
+type -> sudo chmod +x /usr/local/bin/docker-compose
+type -> docker-compose --version [to check if docker-compose is installed properly, if it is working it will display the version]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 3: Install Landoop image from docker
+Google -> landoop fast data dev and follow the steps to install landoop
+To run (it will download if it's not available locally in docker and if available it will just run) type -> sudo docker run --rm -it --net=host landoop/fast-data-dev [do not close this terminal - keep it running]
+From mac, visit http: //<elastic_IP>:3030/ (ex: 13.210.214.215:3030)
+If you see the UI by landoop, then the Kafka+zookeeper docker image has been installed successfully
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 4: Kafka topic creation and data entry through broker
+In this docker, to get to know the commands to interact with kafka do the following
+In a new terminal window, connect to the AWS instance and then type -> sudo docker run --rm -it --net=host landoop/fast-data-dev bash [you will enter root@fast-data-dev]
+To create a topic do the following
+Type -> kafka-topics --zookeeper <elastic_ip>:2181 --create --topic buy_aud --partitions 3 --replication-factor 1 (ex: kafka-topics --zookeeper 13.210.214.215:2181 --create --topic buy_aud --partitions 3 --replication-factor 1)
+To check if the topic was created, either use UI or type -> kafka-topics --zookeeper <elastic_ip>:2181 --list (ex: kafka-topics --zookeeper 13.210.214.215:2181 --list)
+To check the details of a particular topic, type ->  kafka-topics --zookeeper <elastic_ip>:2181 - --describe --topic buy_aud (ex: kafka-topics --zookeeper 13.210.214.215:2181 - --describe --topic buy_aud)
+Publishing data to a topic, type -> kafka-console-producer --broker-list <elastic_ip>:9092 --topic buy_aud (ex: kafka-console-producer --broker-list 13.210.214.215:9092 --topic buy_aud) and then start entering text and press enter key [go to the UI and check if text is published]
+Do the same thing in a new console for topic 2 (sell_aud)
+Create topic -> kafka-topics --zookeeper <elastic_ip>:2181 --create --topic sell_aud --partitions 3 --replication-factor 1 (ex: kafka-topics --zookeeper 13.210.214.215:2181 --create --topic sell_aud --partitions 3 --replication-factor 1)
+Public data to topic ->  kafka-console-producer --broker-list <elastic_ip>:9092 --topic sell_aud (ex: kafka-console-producer --broker-list 13.210.214.215:9092 --topic sell_aud) and then start entering text and press enter key [go to the UI and check if text is published]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 5: Kafka topic consumption using consumers
+In this docker, to get to know the commands to interact with kafka do the following
+In a new terminal window, connect to the AWS instance and then type -> sudo docker run --rm -it --net=host landoop/fast-data-dev bash [you will enter root@fast-data-dev]
+To get data do the following type -> kafka-console-consumer --bootstrap-server <elastic_ip>:9092 --topic buy_aud (ex: kafka-console-consumer --bootstrap-server 13.210.214.215:9092 --topic buy_aud)
+If you want to see all previous data then append “--from-beginning” to the above message
+Now if you go back to the “producer” console for topic “buy_aud” add new messages, it will be displayed in the above consumer console.
+Do the same thing in a new console for topic 2 (sell_aud), type ->  kafka-console-consumer --bootstrap-server <elastic_ip>:9092 --topic sell_aud (ex: kafka-console-consumer --bootstrap-server 13.210.214.215:9092 --topic sell_aud)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+************************************************************************************
+************************************************************************************
