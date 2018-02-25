@@ -10,7 +10,7 @@ Topics 1 & 2  -> Producer ---> Kafka --->  Consumer 1  -> Terminal 1 (Topic 1)
                        |-> Consumer 2 -> Terminal 2 (Topic 2)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Solution
-Install Linux on AWS + Kafka Udemy Docker image
+Install Linux on AWS + Kafka Docker image
 Start Zookeeper
 Start Kafka
 Manually create 2 topics using "producer" commands
